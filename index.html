@@ -1,0 +1,68 @@
+<html>
+  <head>
+    
+    <script type='text/javascript' src='./node_modules/vis/dist/vis.js'></script>
+    <link href="./node_modules/vis/dist/vis-network.min.css" rel="stylesheet" type="text/css" />
+    <style type="text/css">
+      #mynetwork {
+      width: 600px;
+      height: 400px;
+      border: 1px solid lightgray;
+      }
+    </style>
+  </head>
+  <body>
+    <div id='json'>
+      <textarea id='graphjson' name='graphjson' rows='10' cols='50'>-->Insert Graph Here<--</textarea>
+      <button  onclick='fire()'>Draw</button>
+      <input type='text' id='highlighter' value='' />
+      <button onclick='highlight()'>highlight</button>
+      <button onclick='unhighlight()'>forget</button>
+    </div>
+    <div id='mynetwork'></div>
+
+
+    <script type='text/javascript'>
+     var network;
+     var keymap;
+     function unhighlight() {
+         if (!network) return
+         let vals = document.getElementById('highlighter').value.split(' ')
+         network.unselectAll()
+     }
+     function highlight() {
+         if (!network) return
+         let vals = document.getElementById('highlighter').value.split(' ')
+         network.selectNodes(vals.map(k => keymap[k]))
+     }
+     function fire(){
+         let graph = {}
+         try{
+             graph = JSON.parse(document.getElementById('graphjson').value)
+             console.log('<Graph>', graph)
+         }catch(e){
+             console.log("malformed object",e)
+         }
+
+         keymap = Object.keys(graph).reduce((acc,c,i) => {acc[c] = i; return acc},{})
+         let nodes = new vis.DataSet(Object.keys(keymap).map((key) => ({id:keymap[key],label:key})))
+         let edges = new vis.DataSet(
+             Object.keys(keymap).reduce( (acc,key) => {
+                 let adjs = graph[key].map( adjkey => ({from:keymap[key], to:keymap[adjkey], arrows:'to'}) )
+                 return acc.concat(adjs)
+             },[])
+         )
+         let container = document.getElementById('mynetwork')
+         let data = {nodes:nodes, edges:edges}
+         let options = {
+             nodes:{
+                 color:{
+                     highlight:{background:'#ffff00'}
+                 }
+             },
+         }
+         network = new vis.Network(container, data, options)
+     }
+    </script>
+  </body>
+</html>
